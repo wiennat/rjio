@@ -1,0 +1,19 @@
+server:
+  username: admin
+  password: pass
+  session-key: session
+database:
+  filename: dev.db
+  driver: sqlite3
+channel:
+  title: rjio
+  description: rjiochannel
+  category: Business
+  link: https://rjio.apps.in.th
+  author: rjio author
+  email: wiennat@gmail.com
+  language: th
+  permalink: https://rjio.apps.in.th/
+  cover-url: https://via.placeholder.com/1500
+fetcher:
+  interval: 15m

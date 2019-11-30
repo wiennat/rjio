@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>feed source</h1>
+    <form method="post" action="/feeds/{{ .source.ID }}/delete">
+        <div>ต้องการจะลบฟีดนี้? </div>
+
+        <div>
+            <p>ชื่อ: {{ .source.Name }}</p>
+            <p>url: {{ .source.URL }}</p>
+        </div>
+        <button>ยืนยัน</button>
+        <a href="/feeds">ยกเลิก</a>
+
+        <div>* เนื้อหาของฟีดทั้งหมดจะถูกลบตามไปด้วย</div>
+    </form>
+</body>
+</html>

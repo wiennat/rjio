@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>edit feed source (id={{.source.ID}})</h1>
+    <form method="post" action="/feeds/{{.source.ID}}/edit">
+        <div>
+            <label>URL</label>
+            <input name="url" value="{{ .source.URL }}">
+        </div>   
+        <div>
+            <label>Slug</label>
+            <input name="slug" value="{{ .source.Slug }}" >
+        </div>   
+        <div>
+            <label>Name</label>
+            <input name="name" value="{{ .source.Name }}">
+        </div>   
+
+        <input type="hidden" value="{{.ID}}" name="ID" />
+        <button>Submit</button>
+    </form>
+</body>
+</html>

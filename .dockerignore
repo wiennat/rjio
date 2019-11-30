@@ -1,0 +1,4 @@
+*.db
+rice-box.go
+Dockerfile
+dist/

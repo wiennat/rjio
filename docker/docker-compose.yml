@@ -1,0 +1,27 @@
+version: "3"
+services:
+   rjio:
+       image: wiennat/rjio
+       volumes:
+         - "/app/rjio/config:/etc/rjio"
+       ports:
+         - "3000"
+       environment:
+         - DATA_PATH=/data
+         - ANALYTICS_ENABLED=true
+         - ANALYTICS_CODE=UA-123634993-1
+       networks:
+         traefik_net:
+       labels:
+         - "traefik.enable=true"
+         - "traefik.basic.frontend.rule=Host:rjio.apps.in.th"
+         - "traefik.backend=rjio"
+         - "traefik.basic.port=3000"
+         - "traefik.docker.network=traefik_net"
+         - "traefik.basic.protocol=http"
+
+networks:
+  traefik_net:
+    external: true
+  youtoop:
+

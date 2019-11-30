@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <h1>feed source</h1>
+    <form method="post" action="/feeds">
+        <div>
+            <label>URL</label>
+            <input name="url">
+        </div>
+        <div>
+            <label>Slug</label>
+            <input name="slug">
+        </div>
+        <div>
+            <label>Name</label>
+            <input name="name">
+        </div>
+
+        <button>Submit</button>
+    </form>
+    {{ if .message }}<div>{{.message}}</div>{{ end }}
+    <ol>
+        {{range .sources}}
+        <li>{{.Name}} - {{.URL}} [ <a href="/feeds/{{.ID}}/items">items</a> | <a href="/feeds/{{.ID}}/edit">edit</a> |
+            <a href="/feeds/{{.ID}}/delete">delete</a>]</li>
+        {{end}}
+    </ol>
+</body>
+
+</html>

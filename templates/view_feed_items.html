@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>feed source</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>feed_id</th>
+                <th>guid</th>
+                <th>title</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .items }}
+            <tr>
+                <td>{{ .ID }}</td>
+                <td>{{ .FeedID }}</td>
+                <td>{{ .GUID }}</td> 
+                <td>{{ .Title }}</td> 
+                <td>{{ .PubDate }}</td> 
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</body>
+</html>

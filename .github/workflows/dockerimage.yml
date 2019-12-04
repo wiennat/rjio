@@ -21,6 +21,6 @@ jobs:
           # Name of the Docker image
           name: rjio
           # Username for Docker registry
-          username: ${{ secrets.username }}
+          username: ${{ secrets.dockerhub_username }}
           # Password for Docker registry
-          password: ${{ secrets.password }}
+          password: ${{ secrets.dockerhub_password }}

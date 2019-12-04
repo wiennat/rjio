@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>feed source</h1>
+    <h1><a href="/feeds">feeds</a> > items > {{ .source.Name}}</h1>
+
+    {{ if .message }}<div>{{.message}}</div>{{ end }}
+
+    <form method="POST"  action="/feeds/{{ .source.ID}}/refresh">
+        <button>Refresh</button>
+    </form>
     <table>
         <thead>
             <tr>

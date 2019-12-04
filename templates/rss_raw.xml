@@ -11,6 +11,15 @@
     </image>
     <generator>rjio</generator>
     <author>{{ .Config.Author }}</author>
+    <itunes:author>{{ .Config.Author }}</itunes:author>
+    <itunes:subtitle>{{ .Config.Description | html }}</itunes:subtitle>
+    <itunes:summary>{{ .Config.Description | html }}</itunes:summary>  
+    <itunes:owner>
+      <itunes:name>{{ .Config.Author }}</itunes:name>
+      <itunes:email>{{ .Config.Email }}</itunes:email>
+    </itunes:owner>
+    <itunes:image href="{{ .Config.CoverURL | html  }}" />
+    <itunes:category text="{{ .Config.Category }}" />
     {{ with .Config.Language }}<language>{{.}}</language>{{end}}
     <atom:link href="{{ .Config.PermaLink | html }}" rel="self" type="application/rss+xml" />
     {{ range .Entries }}{{ .Entry }}

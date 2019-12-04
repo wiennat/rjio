@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"os"
 
 	"net/http"
+	"net/http/pprof"
 	"strconv"
 	text "text/template"
 	"time"
@@ -93,28 +93,20 @@ func SetupHandler(c *Config) *chi.Mux {
 			r.Delete("/", deleteSourceHandler)
 			r.Get("/delete", confirmDeleteSourceHandler)
 			r.Post("/delete", deleteSourceHandler)
+			r.Post("/refresh", refreshFeedItemsHandler)
 		})
 	})
+
+	r.Get("/debug/pprof/", pprof.Index)
+	r.Get("/debug/pprof/cmdline", pprof.Cmdline)
+	r.Get("/debug/pprof/profile", pprof.Profile)
+	r.Get("/debug/pprof/symbol", pprof.Symbol)
+
+	r.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	r.Handle("/debug/pprof/block", pprof.Handler("block"))
 	return r
-}
-
-func gracefulShutdown() {
-
-	quit := make(chan os.Signal, 1)
-
-	signal.Notify(quit, os.Interrupt)
-	sig := <-quit
-	log.Printf("Shutting down, signal=%s", sig.String())
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	srv.SetKeepAlivesEnabled(false)
-	if err := srv.Shutdown(ctx); err != nil {
-		srv.l.Fatal("Could not gracefully shutdown the server", zap.Error(err))
-	}
-	srv.l.Info("Server stopped")
-
 }
 
 func FlashMiddleware(next http.Handler) http.Handler {
@@ -152,12 +144,11 @@ func customFeedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// convert entries into HTML
-	tpl := text.Must(text.ParseFiles("./templates/rss_raw.xml"))
-	err = tpl.Execute(w, map[string]interface{}{
+	err = renderText(w, "rss_raw.xml", map[string]interface{}{
 		"Entries": d,
 		"Config":  cfg.Channel,
 	})
+
 	if err != nil {
 		fmt.Printf("\nRender Error: %v\n", err)
 		return
@@ -236,6 +227,7 @@ func createSourceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
+		log.Printf("updating feed items. source=%d, slug=%s", source.ID, source.Slug)
 		fetcher.UpdateFeed(&source)
 	}()
 	http.Redirect(w, r, "/feeds", http.StatusSeeOther)
@@ -314,7 +306,11 @@ func updateSourceHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Cannot fetch source, ID=%d, err=%v", source.ID, err)
 			return
 		}
-		fetcher.UpdateFeed(&source)
+		err := fetcher.UpdateFeed(&source)
+		if err != nil {
+			log.Printf("Cannot update items, err=%v", source.ID, err)
+			return
+		}
 	}()
 	http.Redirect(w, r, "/feeds", http.StatusSeeOther)
 }
@@ -391,6 +387,51 @@ func getFeedItemsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("\nRender Error: %v\n", err)
 		return
 	}
+}
+
+func refreshFeedItemsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	source, ok := ctx.Value("source").(Source)
+
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+
+	log.Printf("updating feed items. source=%d, slug=%s", source.ID, source.Slug)
+	err := fetcher.UpdateFeed(&source)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = saveFlash(w, r, fmt.Sprintf("source id: %d refreshed", source.ID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, fmt.Sprintf("/feeds/%d/items", source.ID), http.StatusSeeOther)
+}
+
+func renderText(w http.ResponseWriter, tmpl string, param map[string]interface{}) error {
+	templateBox, err := rice.FindBox("../templates")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// get file contents as string
+	templateString, err := templateBox.String(tmpl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// parse and execute the template
+	tmplMessage, err := text.New(tmpl).Parse(templateString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return tmplMessage.Execute(w, param)
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, param map[string]interface{}) error {

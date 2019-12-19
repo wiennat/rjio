@@ -48,6 +48,7 @@ type ChannelConfig struct {
 	Language    string `yaml:"language"`
 	PermaLink   string `yaml:"permalink"`
 	CoverURL    string `yaml:"cover-url"`
+	Explicit    string `yaml:"explicit"`
 }
 
 type DatabaseConfig struct {
@@ -61,7 +62,7 @@ var fetcher *Fetcher
 
 func SetupFetcher(c *Config) *Fetcher {
 	cfg = c
-	fetcher = NewFetcher(cfg)
+	fetcher = NewFetcher(cfg, nil)
 	return fetcher
 }
 

@@ -15,5 +15,6 @@ channel:
   language: th
   permalink: https://rjio.apps.in.th/
   cover-url: https://via.placeholder.com/1500
+  tracking-prefix: 
 fetcher:
   interval: 15m

@@ -20,6 +20,7 @@
     </itunes:owner>
     <itunes:image href="{{ .Config.CoverURL | html  }}" />
     <itunes:category text="{{ .Config.Category }}" />
+    <itunes:explicit>{{ .Config.Explicit }}</itunes:explicit>
     {{ with .Config.Language }}<language>{{.}}</language>{{end}}
     <atom:link href="{{ .Config.PermaLink | html }}" rel="self" type="application/rss+xml" />
     {{ range .Entries }}{{ .Entry }}

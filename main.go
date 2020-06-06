@@ -2,22 +2,23 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 
-	_ "net/http/pprof"
-
 	"github.com/wiennat/rjio/feed"
+	"github.com/wiennat/rjio/web"
 	yaml "gopkg.in/yaml.v2"
+
+	_ "github.com/mattn/go-sqlite3"
+	"xorm.io/core"
+	"xorm.io/xorm"
 )
 
 // VERSION represents rjio version
 const VERSION string = "0.1.0"
 
 func main() {
-	fmt.Println("Starting rjio " + VERSION)
+	log.Printf("Starting rjio %s", VERSION)
 
 	// parse arguments
 	helpPtr := flag.Bool("h", false, "Display help")
@@ -49,9 +50,28 @@ func main() {
 	}
 	// start program
 
-	feed.SetupDb(&cfg)
-	fetcher := feed.SetupFetcher(&cfg)
+	log.Printf("driver = %s, filename = %s", cfg.Database.Driver, cfg.Database.Filename)
+	engine, err := xorm.NewEngine(cfg.Database.Driver, cfg.Database.Filename)
+	if err != nil {
+		log.Fatalf("Cannot initialize database connection, error=%v", err)
+		os.Exit(2)
+	}
+	engine.SetMapper(core.GonicMapper{})
+
+	log.Printf("port = %s", *portPtr)
+
+	fs, err := feed.NewService(engine)
+
+	fetcher := feed.NewFetcher(&cfg, fs)
 	fetcher.Start()
-	mux := feed.SetupHandler(&cfg)
-	http.ListenAndServe(":"+*portPtr, mux)
+
+	server := web.NewServer()
+	server.Engine = engine
+	server.Config = &cfg
+	server.Port = *portPtr
+	server.Fetcher = fetcher
+	server.Routes()
+	server.SetupSession("rjio-session")
+	server.Start()
+
 }

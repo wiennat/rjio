@@ -63,7 +63,7 @@ var fetcher *Fetcher
 
 func SetupFetcher(c *Config) *Fetcher {
 	cfg = c
-	fetcher = NewFetcher(cfg)
+	fetcher = NewFetcher(cfg, nil)
 	return fetcher
 }
 

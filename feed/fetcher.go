@@ -21,18 +21,19 @@ type FetcherConfig struct {
 	Interval time.Duration `yaml:"interval"`
 }
 type Fetcher struct {
-	Config *Config
+	Config  *Config
+	Service *Service
 }
 
-func NewFetcher(config *Config) *Fetcher {
-	return &Fetcher{Config: config}
+func NewFetcher(config *Config, service *Service) *Fetcher {
+	return &Fetcher{Config: config, Service: service}
 }
 
-func (f Fetcher) Start() {
+func (f *Fetcher) Start() {
 	go func() {
 		for range time.Tick(f.Config.Fetcher.Interval) {
-			log.Println("Fetching feed")
-			sources := DbListSource()
+			log.Println("Start fetching loop")
+			sources := f.Service.ListSource()
 			for _, v := range sources {
 				err := f.UpdateFeed(&v)
 				if err != nil {
@@ -44,30 +45,30 @@ func (f Fetcher) Start() {
 	}()
 }
 
-func (f Fetcher) UpdateFeed(source *Source) error {
-	log.Printf("Updating feed, source=%s", source)
+func (f *Fetcher) UpdateFeed(source *Source) error {
+	log.Printf("Updating feed, source=%v", source)
 	response, err := netClient.Get(source.URL)
 	if err != nil {
-		return fmt.Errorf("Error during fetching for %s, err=%v", source, err)
+		return fmt.Errorf("Error during fetching for %v, err=%v", source, err)
 	}
 	defer response.Body.Close()
 
-	log.Printf("Reading fetched rss, source=%s", source)
+	log.Printf("Reading fetched rss, source=%v", source)
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return fmt.Errorf("Error during reading body for %s, err=%v", source, err)
+		return fmt.Errorf("Error during reading body for %v, err=%v", source, err)
 	}
 
-	log.Printf("Parsing rss, source=%s", source)
+	log.Printf("Parsing rss, source=%v", source)
 	doc, err := xmlquery.Parse(strings.NewReader(string(body)))
 	if err != nil {
-		return fmt.Errorf("Error during parsing feed for %s, err=%v", source, err)
+		return fmt.Errorf("Error during parsing feed for %v, err=%v", source, err)
 	}
 
-	log.Printf("Acquiring item list, source=%s", source)
+	log.Printf("Acquiring item list, source=%v", source)
 	list, err := xmlquery.QueryAll(doc, "//item")
 	if err != nil {
-		return fmt.Errorf("Error during querying feed items for %s, err=%v", source, err)
+		return fmt.Errorf("Error during querying feed items for %v, err=%v", source, err)
 	}
 
 	log.Printf("Found %d items", len(list))
@@ -75,10 +76,10 @@ func (f Fetcher) UpdateFeed(source *Source) error {
 		log.Printf("Parsing #%d item", i)
 		item, err := f.parseItem(it, source)
 		if err != nil {
-			log.Printf("error, source=%s, it=%s, err=%v\n", source, it, err)
+			log.Printf("error, source=%v, it=%v, err=%v\n", source, it, err)
 			continue
 		}
-		DbUpsertSourceItem(item)
+		f.Service.UpsertItem(item)
 	}
 	return nil
 }

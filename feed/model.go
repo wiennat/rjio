@@ -1,8 +1,11 @@
 package feed
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -31,14 +34,15 @@ type Source struct {
 
 // Item represents an item in a feed
 type Item struct {
-	ID          int64
-	FeedID      int64
-	GUID        string `xorm:" varchar(200) not null"`
-	Title       string `xorm:" varchar(200) null"`
-	Description string
-	PubDate     time.Time
-	Raw         string
-	Entry       string
+	ID           int64
+	FeedID       int64
+	GUID         string `xorm:" varchar(200) not null"`
+	Title        string `xorm:" varchar(200) null"`
+	Description  string
+	PubDate      time.Time
+	Raw          string
+	EnclosureUrl string `xorm:" varchar(200) null"`
+	Entry        string
 }
 
 var engine *xorm.Engine
@@ -181,6 +185,7 @@ func DbUpsertSourceItem(item *Item) (int64, error) {
 	}
 	if found {
 		// update
+		log.Printf("update item(%d), %s, %s\n", item.ID, item.FeedID, item.EnclosureUrl)
 		return engine.Id(old.ID).Update(item)
 	}
 
@@ -207,4 +212,44 @@ func DbGetItemsForCustomFeed(offset int, limit int) ([]Item, error) {
 	err = engine.OrderBy("pub_date DESC").Limit(limit, offset).Find(&items)
 
 	return items, err
+}
+
+// apply prefix to enclosure url
+func ApplyEnclosurePrefix(items []Item, prefix string) ([]Item, error) {
+	// find enclosure url in Entry and replace with prefix one
+
+	if prefix == "" {
+		return items, nil
+	}
+
+	for i, item := range items {
+		if strings.Contains(item.EnclosureUrl, "https://anchor.fm/") {
+			// handle anchor.fm url
+			enclosureURLAttr := fmt.Sprintf("url=\"%s\"", item.EnclosureUrl)
+			colonPosition := strings.Index(item.EnclosureUrl, "://")
+			protocol := item.EnclosureUrl[0:colonPosition]
+			escapedURL := item.EnclosureUrl[(colonPosition + 3):]
+			unescaped, err := url.PathUnescape(escapedURL)
+			if err != nil {
+				return nil, err
+			}
+			newEnclosureURLAttr := fmt.Sprintf("url=\"%s://%s%s\"", protocol, prefix, unescaped)
+			items[i].Entry = strings.Replace(item.Entry, enclosureURLAttr, newEnclosureURLAttr, 1)
+		} else {
+
+			log.Printf(">>>>> %v", item)
+			log.Printf(">>>>> %s", item.EnclosureUrl)
+			enclosureURLAttr := fmt.Sprintf("url=\"%s\"", item.EnclosureUrl)
+			colonPosition := strings.Index(item.EnclosureUrl, "://")
+			protocol := item.EnclosureUrl[0:colonPosition]
+			url := item.EnclosureUrl[(colonPosition + 3):]
+			newEnclosureURLAttr := fmt.Sprintf("url=\"%s://%s%s\"", protocol, prefix, url)
+			items[i].Entry = strings.Replace(item.Entry, enclosureURLAttr, newEnclosureURLAttr, 1)
+		}
+	}
+
+	for _, item := range items {
+		log.Println(item.Entry)
+	}
+	return items, nil
 }

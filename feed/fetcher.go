@@ -115,6 +115,15 @@ func (f Fetcher) parseItem(it *xmlquery.Node, source *Source) (*Item, error) {
 		description = n.InnerText()
 	}
 
+	var enclosureUrl string
+	if n := it.SelectElement("enclosure"); n != nil {
+		for _, attr := range n.Attr {
+			if attr.Name.Local == "url" {
+				enclosureUrl = attr.Value
+				fmt.Printf("enclosure URL: %s\n", enclosureUrl)
+			}
+		}
+	}
 	raw := it.OutputXML(true)
 
 	// remove blacklist node
@@ -132,13 +141,14 @@ func (f Fetcher) parseItem(it *xmlquery.Node, source *Source) (*Item, error) {
 
 	entry := it.OutputXML(true)
 	item := Item{
-		GUID:        guid,
-		FeedID:      source.ID,
-		PubDate:     pubDateTime,
-		Title:       title,
-		Description: description,
-		Raw:         raw,
-		Entry:       entry,
+		GUID:         guid,
+		FeedID:       source.ID,
+		PubDate:      pubDateTime,
+		Title:        title,
+		Description:  description,
+		Raw:          raw,
+		Entry:        entry,
+		EnclosureUrl: enclosureUrl,
 	}
 	return &item, nil
 }

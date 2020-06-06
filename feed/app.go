@@ -39,15 +39,16 @@ type ServerConfig struct {
 
 // ChannelConfig represents program configuration
 type ChannelConfig struct {
-	Title       string `yaml:"title"`
-	Description string `yaml:"description"`
-	Category    string `yaml:"category"`
-	Link        string `yaml:"link"`
-	Author      string `yaml:"author"`
-	Email       string `yaml:"email"`
-	Language    string `yaml:"language"`
-	PermaLink   string `yaml:"permalink"`
-	CoverURL    string `yaml:"cover-url"`
+	Title          string `yaml:"title"`
+	Description    string `yaml:"description"`
+	Category       string `yaml:"category"`
+	Link           string `yaml:"link"`
+	Author         string `yaml:"author"`
+	Email          string `yaml:"email"`
+	Language       string `yaml:"language"`
+	PermaLink      string `yaml:"permalink"`
+	CoverURL       string `yaml:"cover-url"`
+	TrackingPrefix string `yaml:"tracking-prefix"`
 }
 
 type DatabaseConfig struct {
@@ -139,6 +140,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func customFeedHandler(w http.ResponseWriter, r *http.Request) {
 	d, err := DbGetItemsForCustomFeed(0, 9999)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// add prefix enclosure
+	d, err = ApplyEnclosurePrefix(d, cfg.Channel.TrackingPrefix)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

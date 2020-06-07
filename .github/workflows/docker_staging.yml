@@ -1,0 +1,22 @@
+name: Push to Dockerhub
+
+on:
+  push:
+    branches: 
+      - staging 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build Docker image
+        run: docker build . --file Dockerfile --tag rjio
+      - name: Publish to Dockerhub 
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: wiennat/rjio
+          username: ${{ secrets.username }}
+          password: ${{ secrets.password }}
+          tags: "staging"
+          snapshot: true
+

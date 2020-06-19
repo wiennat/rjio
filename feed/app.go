@@ -381,7 +381,28 @@ func getFeedItemsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := DbGetSourceItems(source.ID, 0, 50, -1)
+	queries := r.URL.Query()
+
+	limit := 50
+	if len(queries.Get("limit")) > 0 {
+		fmt.Sscanf(queries.Get("limit"), "%d", &limit)
+	}
+
+	offset := 0
+	if len(queries.Get("offset")) > 0 {
+		fmt.Sscanf(queries.Get("offset"), "%d", &offset)
+	}
+
+	direction := -1 // desc
+	if len(queries.Get("dir")) > 0 {
+		if queries.Get("dir") == "asc" {
+			direction = 1
+		} else {
+			direction = -1
+		}
+	}
+
+	items, err := DbGetSourceItems(source.ID, offset, limit, direction)
 	if err != nil {
 		http.Error(w, http.StatusText(422), 422)
 		return

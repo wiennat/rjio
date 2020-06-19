@@ -381,7 +381,7 @@ func getFeedItemsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := DbGetSourceItems(source.ID, 0, 50)
+	items, err := DbGetSourceItems(source.ID, 0, 50, -1)
 	if err != nil {
 		http.Error(w, http.StatusText(422), 422)
 		return

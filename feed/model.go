@@ -160,14 +160,18 @@ func DbDeleteItem(item *Item) error {
 	return err
 }
 
-func DbGetSourceItems(sourceID int64, offset int, limit int) ([]Item, error) {
+func DbGetSourceItems(sourceID int64, offset int, limit int, direction int) ([]Item, error) {
 	engine, err := getEngine()
 	if err != nil {
 		log.Fatalf("error getting engine, %s", err)
 	}
 
 	var items []Item
-	err = engine.Where("feed_id = ?", sourceID).Limit(limit, offset).Find(&items)
+	query := engine.Where("feed_id = ?", sourceID).Limit(limit, offset)
+	if direction < 0 {
+		query = query.Desc("id")
+	}
+	err = query.Find(&items)
 	return items, err
 }
 

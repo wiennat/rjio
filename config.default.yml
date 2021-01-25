@@ -16,6 +16,7 @@ channel:
   permalink: https://rjio.apps.in.th/
   feedlink: https://rjio.apps.in.th/rss
   cover-url: https://via.placeholder.com/1500
+  explicit: no
   tracking-prefix: 
 fetcher:
   interval: 15m

@@ -21,7 +21,7 @@
     <itunes:image href="{{ .Config.CoverURL | html  }}" />
     <itunes:category text="{{ .Config.Category }}" />
     {{ with .Config.Language }}<language>{{.}}</language>{{end}}
-    <atom:link href="{{ .Config.PermaLink | html }}" rel="self" type="application/rss+xml" />
+    <atom:link href="{{ .Config.FeedLink | html }}" rel="self" type="application/rss+xml" />
     {{ range .Entries }}{{ .Entry }}
     {{ end }}
   </channel>

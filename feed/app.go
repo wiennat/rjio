@@ -47,6 +47,7 @@ type ChannelConfig struct {
 	Email          string `yaml:"email"`
 	Language       string `yaml:"language"`
 	PermaLink      string `yaml:"permalink"`
+	FeedLink       string `yaml:"feedlink"`
 	CoverURL       string `yaml:"cover-url"`
 	TrackingPrefix string `yaml:"tracking-prefix"`
 }

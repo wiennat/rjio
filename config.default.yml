@@ -8,6 +8,7 @@ database:
 channel:
   title: rjio
   description: rjiochannel
+  copyright: rjiochannel
   category: Business
   link: https://rjio.apps.in.th
   author: rjio author

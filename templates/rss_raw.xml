@@ -10,6 +10,7 @@
         <link>{{ .Config.PermaLink | html }}</link>
     </image>
     <generator>rjio</generator>
+    <copyright>{{ .Config.Copyright }}</copyright>
     <author>{{ .Config.Author }}</author>
     <itunes:author>{{ .Config.Author }}</itunes:author>
     <itunes:subtitle>{{ .Config.Description | html }}</itunes:subtitle>

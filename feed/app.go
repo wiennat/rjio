@@ -44,6 +44,7 @@ type ChannelConfig struct {
 	Category       string `yaml:"category"`
 	Link           string `yaml:"link"`
 	Author         string `yaml:"author"`
+	Copyright      string `yaml:"copyright"`
 	Email          string `yaml:"email"`
 	Language       string `yaml:"language"`
 	PermaLink      string `yaml:"permalink"`

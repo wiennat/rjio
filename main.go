@@ -53,5 +53,7 @@ func main() {
 	fetcher := feed.SetupFetcher(&cfg)
 	fetcher.Start()
 	mux := feed.SetupHandler(&cfg)
+
+	fmt.Println("Serving content at port :" + *portPtr)
 	http.ListenAndServe(":"+*portPtr, mux)
 }

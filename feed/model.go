@@ -26,23 +26,23 @@ type CustomFeed struct {
 }
 
 type Source struct {
-	ID   int64
-	URL  string `xorm:" varchar(200) not null"`
-	Slug string `xorm:" varchar(200) not null"`
-	Name string `xorm:" varchar(200) not null"`
+	ID   int64  `json:"id"`
+	URL  string `xorm:" varchar(200) not null" json:"url"`
+	Slug string `xorm:" varchar(200) not null" json:"slug"`
+	Name string `xorm:" varchar(200) not null" json:"name"`
 }
 
 // Item represents an item in a feed
 type Item struct {
-	ID           int64
-	FeedID       int64
-	GUID         string `xorm:" varchar(200) not null"`
-	Title        string `xorm:" varchar(200) null"`
-	Description  string
-	PubDate      time.Time
-	Raw          string
-	EnclosureUrl string `xorm:" varchar(200) null"`
-	Entry        string
+	ID           int64     `json:"id"`
+	FeedID       int64     `json:"feedId"`
+	GUID         string    `xorm:" varchar(200) not null" json:"guid"`
+	Title        string    `xorm:" varchar(200) null" json:"title"`
+	Description  string    `json:"description"`
+	PubDate      time.Time `json:"pubdate"`
+	Raw          string    `json:"raw"`
+	EnclosureUrl string    `xorm:" varchar(200) null" json:"enclosureUrl"`
+	Entry        string    `json:"entry"`
 }
 
 var engine *xorm.Engine

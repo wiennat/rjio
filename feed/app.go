@@ -13,7 +13,7 @@ import (
 	text "text/template"
 	"time"
 
-	"github.com/GeertJohan/go.rice"
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/sessions"
@@ -82,10 +82,10 @@ func SetupHandler(c *Config) *chi.Mux {
 
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	r.Use(FlashMiddleware)
 	r.Get("/", indexHandler)
 	r.Get("/rss", customFeedHandler)
 	r.Route("/feeds", func(r chi.Router) {
+		r.Use(FlashMiddleware)
 		r.Get("/", listSourcesHandler)
 		r.Post("/", createSourceHandler)
 
@@ -100,6 +100,8 @@ func SetupHandler(c *Config) *chi.Mux {
 			r.Post("/refresh", refreshFeedItemsHandler)
 		})
 	})
+
+	r.Mount("/api/", ApiRouter())
 
 	r.Get("/debug/pprof/", pprof.Index)
 	r.Get("/debug/pprof/cmdline", pprof.Cmdline)

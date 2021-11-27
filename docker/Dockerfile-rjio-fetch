@@ -1,0 +1,22 @@
+FROM golang:1.13 as builder
+
+WORKDIR /src
+
+COPY ./go.mod ./go.sum Makefile ./
+RUN make deps
+
+# Import the code from the context.
+COPY ./ ./
+
+RUN make build-fetch
+
+FROM alpine AS final
+
+RUN apk --update upgrade && \
+    apk add sqlite ca-certificates && \
+    rm -rf /var/cache/apk/*
+
+COPY --from=builder /src/dist/rjio-fetch /app/rjio-fetch
+EXPOSE 3000
+
+ENTRYPOINT ["/app/rjio-fetch"]

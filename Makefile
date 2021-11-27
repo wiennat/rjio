@@ -25,8 +25,11 @@ run:
 	dist/$(BINARY_NAME)
 
 deps:
-#	$(GOGET) github.com/GeertJohan/go.rice
-#	$(GOGET) github.com/GeertJohan/go.rice/rice
+	$(GOGET) github.com/GeertJohan/go.rice
+	$(GOGET) github.com/GeertJohan/go.rice/rice
+	$(GOMOD) download
+
+deps-fetch:
 	$(GOMOD) download
 
 clean: 

@@ -9,8 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Build Docker image
-        run: docker build -t rjio-fetch -f docker/Dockerfile-rjio-fetch .
       - name: Publish to Dockerhub 
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
@@ -18,3 +16,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           tags: "latest,${{ env.RELEASE_VERSION }}"
+          dockerfile: docker/Dockerfile-rjio-fetch

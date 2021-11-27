@@ -3,7 +3,7 @@ FROM golang:1.13 as builder
 WORKDIR /src
 
 COPY ./go.mod ./go.sum Makefile ./
-RUN make deps
+RUN make deps-fetch
 
 # Import the code from the context.
 COPY ./ ./

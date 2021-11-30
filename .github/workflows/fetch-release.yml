@@ -3,7 +3,7 @@ name: "Tagged-release"
 on:
   push:
     tags:
-      - "v*"
+      - "rjio-fetch/v*"
 
 jobs:
   tagged-release:

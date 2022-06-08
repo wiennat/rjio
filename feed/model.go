@@ -20,29 +20,35 @@ type CustomFeed struct {
 }
 
 type Source struct {
-	ID   int64  `json:"id"`
-	URL  string `xorm:" varchar(200) not null" json:"url"`
-	Slug string `xorm:" varchar(200) not null" json:"slug"`
-	Name string `xorm:" varchar(200) not null" json:"name"`
+	ID   int64  `json:"id" firestore:"id,omitempty"`
+	URL  string `xorm:" varchar(200) not null" json:"url"  firestore:"url,omitempty"`
+	Slug string `xorm:" varchar(200) not null" json:"slug"  firestore:"slug,omitempty"`
+	Name string `xorm:" varchar(200) not null" json:"name"  firestore:"name,omitempty"`
 }
 
 // Item represents an item in a feed
 type Item struct {
-	ID           int64     `json:"id"`
-	FeedID       int64     `json:"feedId"`
-	GUID         string    `xorm:" varchar(200) not null" json:"guid"`
-	Title        string    `xorm:" varchar(200) null" json:"title"`
-	Description  string    `json:"description"`
-	PubDate      time.Time `json:"pubdate"`
-	Raw          string    `json:"raw"`
-	EnclosureUrl string    `xorm:" varchar(200) null" json:"enclosureUrl"`
-	Entry        string    `json:"entry"`
+	ID           int64     `json:"id"  firestore:"id,omitempty"`
+	FeedID       int64     `json:"feedId"  firestore:"feedId,omitempty"`
+	GUID         string    `xorm:" varchar(200) not null" json:"guid" firestore:"guid,omitempty"`
+	Title        string    `xorm:" varchar(200) null" json:"title" firestore:"title,omitempty"`
+	Description  string    `json:"description" firestore:"description,omitempty"`
+	PubDate      time.Time `json:"pubdate"  firestore:"pubDate,omitempty"`
+	Raw          string    `json:"raw"  firestore:"raw,omitempty"`
+	EnclosureUrl string    `xorm:" varchar(200) null" json:"enclosureUrl"  firestore:"enclosure,omitempty"`
+	Entry        string    `json:"entry" firestore:"entry,omitempty"`
 }
 
-var storage *SqlStorage
+var storage Storage
 
-func SetupDb(config *Config) {
-	storage = SetupSqlStorage(config)
+// func SetupDb(config *Config) {
+// storage = SetupSqlStorage(config)
+// s := SetupFirebaseStorage(config)
+// SetupStorage(s)
+// }
+
+func SetupStorage(s Storage) {
+	storage = s
 }
 
 func DbGetSource(id int64) (Source, error) {
@@ -83,6 +89,10 @@ func DbGetSourceItems(sourceID int64, offset int, limit int) ([]Item, error) {
 
 func DbUpsertSourceItem(item *Item) (int64, error) {
 	return storage.UpsertSourceItem(item)
+}
+
+func DbUpsertSourceItems(sourceID int64, items []Item) error {
+	return storage.UpsertSourceItems(sourceID, items)
 }
 
 func DbDeleteItemsBySource(sourceID int64) (int64, error) {

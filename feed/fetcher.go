@@ -18,6 +18,7 @@ var netClient = &http.Client{
 }
 
 type FetcherConfig struct {
+	Enabled  bool          `yaml:"enabled"`
 	Interval time.Duration `yaml:"interval"`
 }
 type Fetcher struct {
@@ -31,15 +32,17 @@ func NewFetcher(config *Config) *Fetcher {
 func (f Fetcher) Start() {
 	go func() {
 		for range time.Tick(f.Config.Fetcher.Interval) {
-			log.Println("Fetching feed")
-			sources := DbListSource()
-			for _, v := range sources {
-				err := f.UpdateFeed(&v)
-				if err != nil {
-					log.Println(err)
+			if cfg.Fetcher.Enabled {
+				log.Println("Fetching feed")
+				sources := DbListSource()
+				for _, v := range sources {
+					err := f.UpdateFeed(&v)
+					if err != nil {
+						log.Println(err)
+					}
 				}
+				log.Println("Finish fetching loop")
 			}
-			log.Println("Finish fetching loop")
 		}
 	}()
 }
@@ -71,6 +74,7 @@ func (f Fetcher) UpdateFeed(source *Source) error {
 	}
 
 	log.Printf("Found %d items", len(list))
+	var items []Item
 	for i, it := range list {
 		log.Printf("Parsing #%d item", i)
 		item, err := f.parseItem(it, source)
@@ -78,7 +82,11 @@ func (f Fetcher) UpdateFeed(source *Source) error {
 			log.Printf("error, source=%s, it=%s, err=%v\n", source, it, err)
 			continue
 		}
-		DbUpsertSourceItem(item)
+		items = append(items, *item)
+	}
+	err = DbUpsertSourceItems(source.ID, items)
+	if err != nil {
+		return err
 	}
 	return nil
 }

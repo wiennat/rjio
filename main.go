@@ -49,7 +49,8 @@ func main() {
 	}
 	// start program
 
-	feed.SetupDb(&cfg)
+	s, err := feed.SetupFirebaseStorage()
+	feed.SetupStorage(s)
 	fetcher := feed.SetupFetcher(&cfg)
 	fetcher.Start()
 	mux := feed.SetupHandler(&cfg)

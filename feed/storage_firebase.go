@@ -2,6 +2,7 @@ package feed
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"log"
 	"math"
@@ -34,7 +35,7 @@ type ItemDocument struct {
 
 func SetupFirebaseStorage() (*FirebaseStorage, error) {
 	ctx := context.Background()
-	app, err := firebase.NewApp(context.Background(), nil, opt)
+	app, err := firebase.NewApp(context.Background(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing app: %v", err)
 	}
@@ -141,85 +142,58 @@ func (fb *FirebaseStorage) DeleteSource(id int64) error {
 }
 
 func (fb *FirebaseStorage) CreateItem(item *Item) error {
-	strId := strconv.FormatInt(item.FeedID, 10)
-	dsnap, err := fb.client.Collection("feeds/samcoke/sources").Doc(strId).Get(fb.ctx)
-	var src SourceDocument
-
-	err = dsnap.DataTo(&src)
-	if err != nil {
-		log.Fatalf("Failed to get source: %v", err)
-		return err
+	itemDocument := ItemDocument{
+		Item: *item,
+		Hash: calculateHash(*item),
 	}
-	src.Items = append(src.Items, *item)
-
-	_, err = fb.client.Collection("feeds/samcoke/sources").Doc(strId).Update(fb.ctx, []firestore.Update{
-		{Path: "items", Value: src.Items},
-	})
+	itemPath := getItemCollection(item.FeedID)
+	_, err := fb.client.Collection(itemPath).Doc(item.GUID).Create(fb.ctx, itemDocument)
 	if err != nil {
-		log.Fatalf("Failed to save item after delete: %v", err)
-		return err
+		log.Fatalf("Failed to create item: %v", err)
 	}
 	return nil
 }
 
 func (fb *FirebaseStorage) UpdateItem(item *Item) error {
-	strId := strconv.FormatInt(item.FeedID, 10)
-	dsnap, err := fb.client.Collection("feeds/samcoke/sources").Doc(strId).Get(fb.ctx)
-	var src SourceDocument
-
-	err = dsnap.DataTo(&src)
-	if err != nil {
-		log.Fatalf("Failed to get source: %v", err)
+	itemDocument := ItemDocument{
+		Item: *item,
+		Hash: calculateHash(*item),
 	}
-	var newItem []Item
-	for _, el := range src.Items {
-		if el.GUID == item.GUID {
-			newItem = append(newItem, *item)
-		}
-	}
-	_, err = fb.client.Collection("feeds/samcoke/sources").Doc(strId).Update(fb.ctx, []firestore.Update{
-		{Path: "items", Value: newItem},
-	})
+	itemPath := getItemCollection(item.FeedID)
+	_, err := fb.client.Collection(itemPath).Doc(item.GUID).Set(fb.ctx, itemDocument)
 	if err != nil {
-		log.Fatalf("Failed to save item after delete: %v", err)
+		log.Fatalf("Failed to create item: %v", err)
 	}
 	return nil
 }
 
 func (fb *FirebaseStorage) DeleteItem(item *Item) error {
-	strId := strconv.FormatInt(item.FeedID, 10)
-	dsnap, err := fb.client.Collection("feeds/samcoke/sources").Doc(strId).Get(fb.ctx)
-	var src SourceDocument
-
-	err = dsnap.DataTo(&src)
+	itemPath := getItemCollection(item.FeedID)
+	_, err := fb.client.Collection(itemPath).Doc(item.GUID).Delete(fb.ctx)
 	if err != nil {
-		log.Fatalf("Failed to get source: %v", err)
-	}
-	var newItem []Item
-	for _, el := range src.Items {
-		if el.GUID != item.GUID {
-			newItem = append(newItem, el)
-		}
-	}
-	_, err = fb.client.Collection("feeds/samcoke/sources").Doc(strId).Update(fb.ctx, []firestore.Update{
-		{Path: "items", Value: newItem},
-	})
-	if err != nil {
-		log.Fatalf("Failed to save item after delete: %v", err)
+		log.Fatalf("Failed to delete item: %v", err)
 	}
 	return nil
 }
 
 func (fb *FirebaseStorage) GetSourceItems(sourceID int64, offset int, limit int) ([]Item, error) {
-	strId := strconv.FormatInt(sourceID, 10)
-	dsnap, err := fb.client.Collection("feeds/samcoke/sources").Doc(strId).Get(fb.ctx)
-	var src SourceDocument
-
-	err = dsnap.DataTo(&src)
-	if err != nil {
-		log.Fatalf("Failed to get source: %v", err)
+	var items []Item
+	itemPath := getItemCollection(sourceID)
+	iter := fb.client.Collection(itemPath).Documents(fb.ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to iterate: %v", err)
+			return nil, err
+		}
+		var itd ItemDocument
+		doc.DataTo(&itd)
+		items = append(items, itd.Item)
 	}
-	return src.Items, nil
+	return items, nil
 }
 
 func (fb *FirebaseStorage) UpsertSourceItem(item *Item) (int64, error) {
@@ -232,39 +206,56 @@ func (fb *FirebaseStorage) UpsertSourceItem(item *Item) (int64, error) {
 }
 
 func (fb *FirebaseStorage) UpsertSourceItems(sourceID int64, items []Item) error {
-	strId := strconv.FormatInt(sourceID, 10)
-	dsnap, err := fb.client.Collection("feeds/samcoke/sources").Doc(strId).Get(fb.ctx)
-	var src SourceDocument
-
-	err = dsnap.DataTo(&src)
-	if err != nil {
-		log.Fatalf("Failed to get source: %v", err)
-	}
-
-	_, err = fb.client.Collection("feeds/samcoke/sources").Doc(strId).Update(fb.ctx, []firestore.Update{
-		{Path: "items", Value: items},
-	})
-	if err != nil {
-		log.Fatalf("Failed to update items: %v", err)
+	for _, item := range items {
+		_, err := fb.UpsertSourceItem(&item)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (fb *FirebaseStorage) DeleteItemsBySource(sourceID int64) (int64, error) {
-	strId := strconv.FormatInt(sourceID, 10)
-	dsnap, err := fb.client.Collection("feeds/samcoke/sources").Doc(strId).Get(fb.ctx)
-	var src SourceDocument
+	itemPath := getItemCollection(sourceID)
+	collection := fb.client.Collection(itemPath)
+	batchSize := 100
+	totalDeleted := 0
 
-	err = dsnap.DataTo(&src)
-	if err != nil {
-		log.Fatalf("Failed to get source: %v", err)
+	for {
+		// Get a batch of documents
+		iter := collection.Limit(batchSize).Documents(fb.ctx)
+		numDeleted := 0
+
+		// Iterate through the documents, adding
+		// a delete operation for each one to a
+		// WriteBatch.
+		batch := fb.client.Batch()
+		for {
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return int64(totalDeleted), err
+			}
+
+			batch.Delete(doc.Ref)
+			numDeleted++
+			totalDeleted++
+		}
+
+		// If there are no documents to delete,
+		// the process is over.
+		if numDeleted == 0 {
+			break
+		}
+
+		_, err := batch.Commit(fb.ctx)
+		if err != nil {
+			return int64(totalDeleted), err
+		}
 	}
-	numDeleted := len(src.Items)
-	items := make([]Item, 0)
-	fb.client.Collection("feeds/samcoke/sources").Doc(strId).Update(fb.ctx, []firestore.Update{
-		{Path: "items", Value: items},
-	})
-	return int64(numDeleted), nil
+	return int64(totalDeleted), nil
 }
 
 func (fb *FirebaseStorage) GetItemsForCustomFeed(offset int, limit int) ([]Item, error) {
@@ -281,4 +272,16 @@ func (fb *FirebaseStorage) GetItemsForCustomFeed(offset int, limit int) ([]Item,
 	}
 
 	return items, nil
+}
+
+func getItemCollection(sourceID int64) string {
+	return fmt.Sprintf("feeds/samcoke/sources/%d/items", sourceID)
+}
+
+func getItemPath(item Item) string {
+	return fmt.Sprintf("feeds/samcoke/sources/%d/items/%s", item.FeedID, item.GUID)
+}
+
+func calculateHash(itd Item) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(itd.Raw)))
 }

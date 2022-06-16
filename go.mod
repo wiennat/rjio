@@ -12,6 +12,7 @@ require (
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/gorilla/sessions v1.2.0
+	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/rs/zerolog v1.26.0
 	google.golang.org/api v0.73.0

@@ -9,6 +9,8 @@ import (
 
 	_ "net/http/pprof"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	"github.com/wiennat/rjio/feed"
 	yaml "gopkg.in/yaml.v2"
 )

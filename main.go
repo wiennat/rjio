@@ -25,8 +25,6 @@ func main() {
 	helpPtr := flag.Bool("h", false, "Display help")
 	configPtr := flag.String("c", "config.yml", "Config file path.")
 	portPtr := flag.String("p", "3000", "Port")
-	runFetcherPtr := flag.Bool("f", true, "Enable fetcher.")
-	runServerPtr := flag.Bool("s", true, "Enable server.")
 
 	flag.Parse()
 	if *helpPtr {
@@ -66,14 +64,10 @@ func main() {
 		}
 	}
 
-	if *runFetcherPtr {
-		fetcher := feed.SetupFetcher(&cfg)
-		fetcher.Start()
-	}
+	fetcher := feed.SetupFetcher(&cfg)
+	fetcher.Start()
+	mux := feed.SetupHandler(&cfg)
 
-	if *runServerPtr {
-		mux := feed.SetupHandler(&cfg)
-		fmt.Println("Serving content at port :" + *portPtr)
-		http.ListenAndServe(":"+*portPtr, mux)
-	}
+	fmt.Println("Serving content at port :" + *portPtr)
+	http.ListenAndServe(":"+*portPtr, mux)
 }

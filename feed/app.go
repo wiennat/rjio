@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"sort"
 
 	"net/http"
 	"net/http/pprof"
@@ -156,6 +157,10 @@ func customFeedHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	sort.Slice(d, func(i, j int) bool {
+		return d[i].PubDate.After(d[j].PubDate)
+	})
 
 	err = renderText(w, "rss_raw.xml", map[string]interface{}{
 		"Entries": d,

@@ -27,6 +27,11 @@ run:
 	$(GOBUILD) -o dist/$(BINARY_NAME) main.go
 	dist/$(BINARY_NAME)
 
+run-serve:
+	# cd feed && $(RICE) embed-go && cd ..
+	$(GOBUILD) -o dist/$(BINARY_NAME) main.go
+	dist/$(BINARY_NAME) -s true -f false
+
 deps:
 	$(GOGET) github.com/GeertJohan/go.rice
 	$(GOGET) github.com/GeertJohan/go.rice/rice

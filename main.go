@@ -9,6 +9,8 @@ import (
 
 	_ "net/http/pprof"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	"github.com/wiennat/rjio/feed"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -48,8 +50,20 @@ func main() {
 		os.Exit(2)
 	}
 	// start program
+	if cfg.Database.Driver == "firebase" {
+		s, err := feed.SetupFirebaseStorage()
+		feed.SetupStorage(s)
+		if err != nil {
+			log.Fatalf("cannot initialize firebase storage. error=%v", err)
+		}
+	} else if cfg.Database.Driver == "sqlite" {
+		s := feed.SetupSqlStorage(&cfg)
+		feed.SetupStorage(s)
+		if err != nil {
+			log.Fatalf("cannot initialize sql storage. error=%v", err)
+		}
+	}
 
-	feed.SetupDb(&cfg)
 	fetcher := feed.SetupFetcher(&cfg)
 	fetcher.Start()
 	mux := feed.SetupHandler(&cfg)

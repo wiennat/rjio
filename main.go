@@ -25,6 +25,8 @@ func main() {
 	helpPtr := flag.Bool("h", false, "Display help")
 	configPtr := flag.String("c", "config.yml", "Config file path.")
 	portPtr := flag.String("p", "3000", "Port")
+	runFetcherPtr := flag.Bool("f", true, "Enable fetcher.")
+	runServerPtr := flag.Bool("s", true, "Enable server.")
 
 	flag.Parse()
 	if *helpPtr {
@@ -50,13 +52,28 @@ func main() {
 		os.Exit(2)
 	}
 	// start program
+	if cfg.Database.Driver == "firebase" {
+		s, err := feed.SetupFirebaseStorage()
+		feed.SetupStorage(s)
+		if err != nil {
+			log.Fatalf("cannot initialize firebase storage. error=%v", err)
+		}
+	} else if cfg.Database.Driver == "sqlite" {
+		s := feed.SetupSqlStorage(&cfg)
+		feed.SetupStorage(s)
+		if err != nil {
+			log.Fatalf("cannot initialize sql storage. error=%v", err)
+		}
+	}
 
-	s, err := feed.SetupFirebaseStorage()
-	feed.SetupStorage(s)
-	fetcher := feed.SetupFetcher(&cfg)
-	fetcher.Start()
-	mux := feed.SetupHandler(&cfg)
+	if *runFetcherPtr {
+		fetcher := feed.SetupFetcher(&cfg)
+		fetcher.Start()
+	}
 
-	fmt.Println("Serving content at port :" + *portPtr)
-	http.ListenAndServe(":"+*portPtr, mux)
+	if *runServerPtr {
+		mux := feed.SetupHandler(&cfg)
+		fmt.Println("Serving content at port :" + *portPtr)
+		http.ListenAndServe(":"+*portPtr, mux)
+	}
 }

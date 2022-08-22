@@ -13,3 +13,5 @@
 
 dist/
 *.db
+.env
+config.yml

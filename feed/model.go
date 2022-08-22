@@ -41,12 +41,6 @@ type Item struct {
 
 var storage Storage
 
-// func SetupDb(config *Config) {
-// storage = SetupSqlStorage(config)
-// s := SetupFirebaseStorage(config)
-// SetupStorage(s)
-// }
-
 func SetupStorage(s Storage) {
 	storage = s
 }

@@ -1,6 +1,7 @@
 package rjio2
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -34,8 +35,8 @@ type FeedSourceConfig struct {
 }
 
 type FeedSourceConfigItem struct {
-	Href string `yaml:"href"`
-	Slug string `yaml:"slug"`
+	Href string `yaml:"href" json:"url"`
+	Slug string `yaml:"slug" json:"slug"`
 }
 
 func Execute(option *FetchOption) { // config string, templatePath string, outPath string) {
@@ -48,10 +49,22 @@ func Execute(option *FetchOption) { // config string, templatePath string, outPa
 
 	var c FeedSourceConfig
 
-	err = yaml.Unmarshal(yamlFile, &c)
-	if err != nil {
-		log.Error().Msgf("Unmarshal: %v", err)
+	if strings.HasSuffix(option.SourcePath, ".yaml") || strings.HasSuffix(option.SourcePath, ".yml") {
+		err = yaml.Unmarshal(fileContent, &c)
+		if err != nil {
+			log.Error().Msgf("Unmarshal: %v", err)
+		}
 	}
+	
+	if strings.HasSuffix(option.SourcePath, ".json") {
+		var arr []FeedSourceConfigItem
+		err = json.Unmarshal(fileContent, &arr)
+		if err != nil {
+			log.Error().Msgf("Unmarshal: %v", err)
+		}
+		c.Sources = arr
+	}
+		
 
 	allitems := make([]Item, 0)
 	for _, v := range c.Sources {

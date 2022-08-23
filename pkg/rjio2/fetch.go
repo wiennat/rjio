@@ -42,7 +42,7 @@ type FeedSourceConfigItem struct {
 func Execute(option *FetchOption) { // config string, templatePath string, outPath string) {
 	storage := NewFileStorage(".")
 	// read
-	yamlFile, err := ioutil.ReadFile(option.SourcePath)
+	fileContent, err := ioutil.ReadFile(option.SourcePath)
 	if err != nil {
 		log.Error().Msgf("yamlFile.Get err #%v ", err)
 	}

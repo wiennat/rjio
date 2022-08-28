@@ -4,19 +4,20 @@ import (
 	"context"
 	_ "errors"
 	"fmt"
-	"html/template"
 	"log"
 
 	"net/http"
 	"net/http/pprof"
 	"strconv"
+	"text/template"
 	text "text/template"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/sessions"
+
+	"github.com/wiennat/rjio/templates"
 )
 
 const (
@@ -427,19 +428,13 @@ func refreshFeedItemsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderText(w http.ResponseWriter, tmpl string, param map[string]interface{}) error {
-	templateBox, err := rice.FindBox("../templates")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// get file contents as string
-	templateString, err := templateBox.String(tmpl)
+	templateBytes, err := templates.TemplateBox.ReadFile(tmpl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// parse and execute the template
-	tmplMessage, err := text.New(tmpl).Parse(templateString)
+	tmplMessage, err := text.New(tmpl).Parse(string(templateBytes))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -448,19 +443,14 @@ func renderText(w http.ResponseWriter, tmpl string, param map[string]interface{}
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, param map[string]interface{}) error {
-	templateBox, err := rice.FindBox("../templates")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// get file contents as string
-	templateString, err := templateBox.String(tmpl)
+	templateBytes, err := templates.TemplateBox.ReadFile(tmpl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// parse and execute the template
-	tmplMessage, err := template.New(tmpl).Parse(templateString)
+	tmplMessage, err := template.New(tmpl).Parse(string(templateBytes))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -15,7 +15,7 @@ jobs:
         with:
           go-version: '^1.17.3'
       - name: Prepare deps
-        run: make deps-fetch
+        run: make deps
       - name: Build go binary
         run: make build-fetch
       - name: Release

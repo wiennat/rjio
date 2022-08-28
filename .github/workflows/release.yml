@@ -20,6 +20,15 @@ jobs:
         run: make build
       - name: Build rjio-fetch binary
         run: make build
+      - name: Build Docker image
+        run: docker build . --file Dockerfile --tag rjio
+      - name: Publish to Dockerhub 
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: wiennat/rjio
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          tags: "latest,${{ env.RELEASE_VERSION }}"
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

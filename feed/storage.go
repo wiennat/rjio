@@ -5,7 +5,6 @@ import (
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
-	_ "modernc.org/sqlite"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )

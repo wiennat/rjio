@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Publish to Dockerhub 
-        uses: elgohr/Publish-Docker-Github-Action@master
+        uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: wiennat/rjio-fetch
           username: ${{ secrets.DOCKERHUB_USERNAME }}

@@ -23,7 +23,7 @@ jobs:
       - name: Build Docker image
         run: docker build . --file Dockerfile --tag rjio
       - name: Publish to Dockerhub 
-        uses: elgohr/Publish-Docker-Github-Action@master
+        uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: wiennat/rjio
           username: ${{ secrets.DOCKERHUB_USERNAME }}
